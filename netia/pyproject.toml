@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "netia"
+version = "0.1.0"
+description = "Assistant IA en ligne de commande pour les réseaux informatiques : commandes, protocoles, configuration de routeurs/switches, Python."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = ["anthropic>=2.14,<3"]
+keywords = ["réseau", "cisco", "routeur", "switch", "ia", "cli", "claude"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+netia = "netia.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
