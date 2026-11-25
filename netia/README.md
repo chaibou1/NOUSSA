@@ -14,12 +14,28 @@ commandes** pour toi, toujours avec ta validation.
 
 ## Installation
 
+Il faut Python 3.10 ou plus récent :
+
 ```bash
-cd netia
-pip install .
+pip install netia
 ```
 
-(Pour développer : `pip install -e ".[dev]"` puis `pytest`.)
+Mise à jour : `pip install -U netia`.
+
+Version de développement directement depuis GitHub :
+
+```bash
+pip install "git+https://github.com/chaibou1/NOUSSA.git#subdirectory=netia"
+```
+
+(Pour développer : dans `netia/`, `pip install -e ".[dev]"` puis `pytest`.)
+
+## Publier une nouvelle version (mainteneur)
+
+1. Change `version` dans `netia/pyproject.toml` et `netia/src/netia/__init__.py`.
+2. Commit, puis `git tag netia-vX.Y.Z && git push origin netia-vX.Y.Z`.
+3. Le workflow `.github/workflows/publish-netia.yml` lance les tests (Linux et
+   Windows), construit le package et le publie sur PyPI.
 
 ## Premier lancement
 

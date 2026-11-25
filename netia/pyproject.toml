@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -8,9 +8,23 @@ version = "0.2.0"
 description = "Agent IA dans le terminal pour les réseaux informatiques et le code : commandes, protocoles, configuration de routeurs/switches, création de fichiers. Claude, OpenAI, Gemini, Mistral, DeepSeek, Groq, Ollama."
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "MIT" }
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "chaibou1" }]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Environment :: Console",
+    "Intended Audience :: Education",
+    "Natural Language :: French",
+    "Operating System :: OS Independent",
+    "Topic :: System :: Networking",
+]
 dependencies = ["anthropic>=2.14,<3", "openai>=1.40,<4", "rich>=13"]
 keywords = ["réseau", "cisco", "routeur", "switch", "ia", "cli", "claude"]
+
+[project.urls]
+Homepage = "https://github.com/chaibou1/NOUSSA"
+Source = "https://github.com/chaibou1/NOUSSA"
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]
