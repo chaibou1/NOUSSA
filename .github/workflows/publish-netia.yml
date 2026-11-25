@@ -1,22 +1,31 @@
-# Publie le package Python NetIA sur PyPI.
+# Publie une nouvelle version de NetIA :
+#   - sur PyPI                  → pip install netia
+#   - en paquets .deb           → sudo apt install ./netia_linux_amd64.deb (ou install.sh)
+#   - en exécutable Windows     → netia_windows_x64.exe (ou install.cmd)
+# Tous les fichiers sont attachés à une Release GitHub.
 #
 # Déclenchement : pousser un tag « netia-vX.Y.Z » dont la version correspond à
 # celle de netia/pyproject.toml, par exemple :
 #   git tag netia-v0.2.0 && git push origin netia-v0.2.0
+# Lancé à la main (workflow_dispatch), il construit et teste tout sans publier.
 #
-# Authentification : « Trusted Publishing » (OIDC). Aucun jeton n'est stocké
-# dans le dépôt ; PyPI fait confiance à ce workflow précis, déclaré une fois sur
+# PyPI : « Trusted Publishing » (OIDC). Aucun jeton n'est stocké dans le dépôt ;
+# PyPI fait confiance à ce workflow, déclaré une fois sur
 # https://pypi.org/manage/account/publishing/
-name: Publier NetIA sur PyPI
+name: Publier NetIA
 
 on:
   push:
     tags: ["netia-v*"]
+    # Sur les branches : tests + construction seulement (rien n'est publié).
+    branches: ["**"]
+    paths: ["netia/**", ".github/workflows/publish-netia.yml"]
   workflow_dispatch:
 
 defaults:
   run:
     working-directory: netia
+    shell: bash
 
 jobs:
   test:
@@ -33,7 +42,7 @@ jobs:
       - run: pip install -e ".[dev]"
       - run: pytest -q
 
-  build:
+  python-dist:
     needs: test
     runs-on: ubuntu-latest
     steps:
@@ -43,7 +52,6 @@ jobs:
           python-version: "3.13"
       - name: Vérifier que le tag correspond à la version
         if: startsWith(github.ref, 'refs/tags/')
-        shell: bash
         run: |
           version=$(python -c "import tomllib;print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
           tag="${GITHUB_REF_NAME#netia-v}"
@@ -56,11 +64,53 @@ jobs:
       - run: twine check dist/*
       - uses: actions/upload-artifact@v4
         with:
-          name: dist
+          name: python-dist
           path: netia/dist/
 
-  publish:
-    needs: build
+  binaries:
+    needs: test
+    strategy:
+      matrix:
+        include:
+          # Ubuntu 22.04 (glibc 2.35) : le binaire marche aussi sur les versions plus récentes.
+          - { os: ubuntu-22.04, arch: amd64, kind: deb }
+          - { os: ubuntu-22.04-arm, arch: arm64, kind: deb }
+          - { os: windows-latest, arch: x64, kind: exe }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install . "pyinstaller>=6.10"
+      - name: Construire l'exécutable autonome
+        run: >
+          pyinstaller --onefile --console --name netia
+          --collect-submodules pygments.lexers
+          --collect-submodules rich._unicode_data
+          --collect-data certifi
+          packaging/netia_entry.py
+      - name: Paquet .deb
+        if: matrix.kind == 'deb'
+        run: |
+          packaging/build_deb.sh dist/netia ${{ matrix.arch }} out
+          sudo apt-get install -y "$PWD/out/netia_linux_${{ matrix.arch }}.deb"
+          netia --version
+          netia models > /dev/null
+      - name: Exécutable Windows
+        if: matrix.kind == 'exe'
+        run: |
+          mkdir -p out
+          cp dist/netia.exe out/netia_windows_x64.exe
+          out/netia_windows_x64.exe --version
+          out/netia_windows_x64.exe models > /dev/null
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bin-${{ matrix.kind }}-${{ matrix.arch }}
+          path: netia/out/
+
+  publish-pypi:
+    needs: [python-dist, binaries]
     if: startsWith(github.ref, 'refs/tags/netia-v')
     runs-on: ubuntu-latest
     environment:
@@ -71,8 +121,48 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: dist
+          name: python-dist
           path: dist/
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist/
+
+  github-release:
+    needs: [python-dist, binaries]
+    if: startsWith(github.ref, 'refs/tags/netia-v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+      - name: Créer la Release GitHub
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${GITHUB_REF_NAME#netia-v}"
+          cat > notes.md <<NOTES
+          ## Installation
+
+          **Linux (Debian / Ubuntu)** :
+          \`\`\`bash
+          curl -fsSL https://github.com/${GITHUB_REPOSITORY}/releases/latest/download/install.sh | sh
+          \`\`\`
+          ou télécharge le \`.deb\` puis : \`sudo apt install ./netia_linux_amd64.deb\`
+
+          **Windows (cmd)** :
+          \`\`\`bat
+          curl -fsSLo %TEMP%\\netia-install.cmd https://github.com/${GITHUB_REPOSITORY}/releases/latest/download/install.cmd && %TEMP%\\netia-install.cmd
+          \`\`\`
+
+          **Partout (Python 3.10+)** : \`pip install netia\`
+          NOTES
+          gh release create "$GITHUB_REF_NAME" \
+            --title "NetIA $version" \
+            --notes-file notes.md \
+            ../artifacts/bin-*/* \
+            ../artifacts/python-dist/* \
+            packaging/install.sh \
+            packaging/install.cmd

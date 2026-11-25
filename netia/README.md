@@ -14,7 +14,36 @@ commandes** pour toi, toujours avec ta validation.
 
 ## Installation
 
-Il faut Python 3.10 ou plus récent :
+### Linux (Debian, Ubuntu, Mint, Kali…) avec apt
+
+```bash
+curl -fsSL https://github.com/chaibou1/NOUSSA/releases/latest/download/install.sh | sh
+```
+
+Ou à la main : télécharge `netia_linux_amd64.deb` (ou `arm64` pour un
+Raspberry Pi 64 bits) depuis la
+[page des versions](https://github.com/chaibou1/NOUSSA/releases/latest), puis :
+
+```bash
+sudo apt install ./netia_linux_amd64.deb
+```
+
+Désinstaller : `sudo apt remove netia`. Python n'est pas nécessaire.
+
+### Windows (cmd)
+
+Colle cette ligne dans **cmd** :
+
+```bat
+curl -fsSLo %TEMP%\netia-install.cmd https://github.com/chaibou1/NOUSSA/releases/latest/download/install.cmd && %TEMP%\netia-install.cmd
+```
+
+Puis ouvre un **nouveau** cmd et tape `netia`. Python n'est pas nécessaire.
+Windows peut afficher un avertissement SmartScreen au premier lancement,
+parce que l'exécutable n'est pas signé : clique sur « Informations
+complémentaires » puis « Exécuter quand même ».
+
+### Partout avec pip (Python 3.10+)
 
 ```bash
 pip install netia
@@ -35,7 +64,8 @@ pip install "git+https://github.com/chaibou1/NOUSSA.git#subdirectory=netia"
 1. Change `version` dans `netia/pyproject.toml` et `netia/src/netia/__init__.py`.
 2. Commit, puis `git tag netia-vX.Y.Z && git push origin netia-vX.Y.Z`.
 3. Le workflow `.github/workflows/publish-netia.yml` lance les tests (Linux et
-   Windows), construit le package et le publie sur PyPI.
+   Windows), construit le package Python, les `.deb` (amd64, arm64) et
+   `netia.exe`, publie sur PyPI et crée une Release GitHub avec tous les fichiers.
 
 ## Premier lancement
 

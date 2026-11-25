@@ -277,7 +277,19 @@ def normalize_argv(argv: list[str]) -> list[str]:
     return ["ask", *argv]
 
 
+def _safe_streams() -> None:
+    """Évite un plantage si la sortie redirigée ne gère pas l'UTF-8 (Windows : cp1252)."""
+    for stream in (sys.stdout, sys.stderr):
+        encoding = (getattr(stream, "encoding", "") or "").lower().replace("-", "")
+        if encoding != "utf8" and hasattr(stream, "reconfigure"):
+            try:
+                stream.reconfigure(errors="replace")
+            except (ValueError, OSError):
+                pass
+
+
 def main(argv: list[str] | None = None) -> int:
+    _safe_streams()
     argv = normalize_argv(list(sys.argv[1:] if argv is None else argv))
     args = build_parser().parse_args(argv)
     command = args.command
