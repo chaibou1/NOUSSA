@@ -23,4 +23,4 @@
 
 ## Note
 Le certificat de décès à l'écran est une reconstitution ; la mention « mort naturelle » est documentée.
-Les trois dernières phrases (verdict de 2022, citation finale) sont à l'écran sans voix off, faute de quota ElevenLabs.
+
