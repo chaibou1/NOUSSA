@@ -91,6 +91,7 @@ def main():
     ap.add_argument("--rotation", type=int, default=0)
     ap.add_argument("--lumiere", type=float, default=0.97, help="luminosité du produit")
     ap.add_argument("--ombre", type=float, default=1.0, help="intensité des ombres")
+    ap.add_argument("--a-plat", action="store_true", help="produit photographié de dessus (flat lay)")
     ap.add_argument("--ombre-x", type=float, default=0.10, help="décalage de l'ombre portée (fraction largeur produit)")
     a = ap.parse_args()
 
@@ -127,6 +128,20 @@ def main():
 
     canvas = bg.convert("RGBA")
     pa = prod.getchannel("A")
+
+    if a.a_plat:
+        # vue de dessus : ombre douce décalée sous toute la silhouette
+        layer = Image.new("L", (W, H), 0)
+        sil = pa.point(lambda v: min(255, v * 0.55 * a.ombre))
+        layer.paste(sil, (x + round(pw * 0.025), y + round(ph * 0.02)), sil)
+        layer = layer.filter(ImageFilter.GaussianBlur(max(8, pw * 0.025)))
+        canvas.alpha_composite(Image.merge("RGBA", (*[Image.new("L", (W, H), 15)] * 3, layer)))
+        canvas.alpha_composite(prod, (x, y))
+        full_a = Image.new("L", (W, H), 0)
+        full_a.paste(pa, (x, y))
+        out = vignette(light_wrap(canvas.convert("RGB"), bg, full_a), 0.30)
+        ImageEnhance.Contrast(out).enhance(1.04).save(a.sortie, quality=92)
+        return
 
     # ombre portée : silhouette écrasée et inclinée vers l'arrière
     sh_h = max(1, round(ph * 0.22))
