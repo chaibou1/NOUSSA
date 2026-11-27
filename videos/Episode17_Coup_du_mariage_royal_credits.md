@@ -20,7 +20,7 @@ Ce sont des reconstitutions stylisées, signalées à l'écran. Les cartes vienn
 
 ## Sources des faits
 - Wikipédia, « 1981 Gambian coup d'état attempt » et « Senegambia Confederation ».
-- Arnold Hughes, « The attempted Gambian coup d'état of 27 July 1981 ».
+- Arnold Hughes, travaux sur la tentative de coup d'État du 30 juillet 1981 en Gambie.
 - BBC, nécrologie de Sir Dawda Jawara (2019).
 
 ## Musique et sons
